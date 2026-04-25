@@ -1,9 +1,15 @@
-# Environment variables (sirlar)
+# ===========================================
+# Sirlar (HECH QACHON git'ga tushmasligi kerak)
+# ===========================================
 .env
 .env.local
 .env.*.local
+*.pem
+*.key
 
+# ===========================================
 # Python
+# ===========================================
 __pycache__/
 *.py[cod]
 *$py.class
@@ -16,28 +22,54 @@ ENV/
 *.egg-info/
 dist/
 build/
+.pytest_cache/
 
-# IDE
+# ===========================================
+# IDE / Editor
+# ===========================================
 .idea/
 .vscode/
 *.swp
 *.swo
+.claude/
 
+# ===========================================
 # OS
+# ===========================================
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Logs
+# ===========================================
+# Loglar (development paytida yaratilgan)
+# ===========================================
 *.log
 logs/
 
-# Database
+# ===========================================
+# Database fayllari
+# ===========================================
 *.db
 *.sqlite3
+*.sqlite
 
-# Yuklangan rasmlar (ishlab chiqarishda saqlanadi, lekin repository'da kerakmas)
+# ===========================================
+# Yuklangan rasmlar (production'da serverdan kelmaydi)
+# ===========================================
 app/static/uploads/*
 !app/static/uploads/.gitkeep
 
-# Alembic cache
-alembic/versions/__pycache__/
+# ===========================================
+# Tunnel toollari (development uchun, repository'da kerak emas)
+# ===========================================
+cloudflared
+cloudflared.exe
+ngrok
+ngrok.exe
+
+# ===========================================
+# Test/temp fayllar
+# ===========================================
+_test_*.py
+test_temp/
+*.bak
