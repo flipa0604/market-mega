@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl *)",
+      "PowerShell(& \"D:\\\\projects\\\\market mega\\\\venv\\\\Scripts\\\\python.exe\" \"D:\\\\projects\\\\market mega\\\\_test_db.py\" 2>&1)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(ngrok *)",
+      "PowerShell(Test-Path *)",
+      "PowerShell(try { $r = Invoke-WebRequest -Uri \"http://localhost:8000/admin/login\" -UseBasicParsing -TimeoutSec 5; Write-Output \"Status: $\\($r.StatusCode\\)\"; if \\($r.Content -match \"Admin panel\"\\) { Write-Output \"Admin login sahifasi ISHLAYAPTI\" } } catch { Write-Output \"Xato: $_\" })",
+      "PowerShell(Get-Item *)",
+      "PowerShell(Stop-Process *)"
+    ]
+  }
+}

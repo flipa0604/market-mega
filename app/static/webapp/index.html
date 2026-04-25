@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+    <meta name="theme-color" content="#6366f1">
+    <title>Market Mega</title>
+    <link rel="stylesheet" href="/static/webapp/app.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Loading screen -->
+        <div id="loader" class="screen loader-screen">
+            <div class="loader-logo"><div class="loader-spinner"></div></div>
+            <div class="loader-text">Yuklanmoqda...</div>
+        </div>
+
+        <!-- Error screen -->
+        <div id="error-screen" class="screen hidden">
+            <div class="error-box">
+                <div class="error-icon">⚠️</div>
+                <h2>Xatolik</h2>
+                <p id="error-text">Noma'lum xato</p>
+                <button id="btn-reload" class="btn-reload" onclick="location.reload()">Qayta urinish</button>
+                <button id="btn-close" class="btn-reload" style="display:none; margin-top:8px; background:#6b7280" onclick="closeWebApp()">Yopish</button>
+            </div>
+        </div>
+
+        <!-- ========== TAB: HOME (categories / products) ========== -->
+        <div id="tab-home" class="tab-screen hidden">
+            <!-- Categories -->
+            <div id="categories-screen" class="screen">
+                <header class="app-header">
+                    <div class="header-greeting">
+                        <span class="wave">👋</span>
+                        <div>
+                            <div class="greeting-small">Salom,</div>
+                            <div class="greeting-name" id="user-name">...</div>
+                        </div>
+                    </div>
+                    <h1 class="section-title">Kategoriyalar</h1>
+                    <p class="section-sub">Kerakli bo'limni tanlang</p>
+                </header>
+                <div class="categories-grid" id="categories-grid"></div>
+            </div>
+
+            <!-- Products -->
+            <div id="products-screen" class="screen hidden">
+                <header class="app-header with-back">
+                    <button class="back-btn" onclick="App.showCategories()">‹</button>
+                    <h1 id="products-title" class="section-title">...</h1>
+                </header>
+                <div class="products-list" id="products-list"></div>
+            </div>
+        </div>
+
+        <!-- ========== TAB: CART ========== -->
+        <div id="tab-cart" class="tab-screen hidden">
+            <header class="app-header">
+                <h1 class="section-title">🛒 Savatim</h1>
+                <p class="section-sub" id="cart-sub">Mahsulotlaringiz</p>
+            </header>
+            <div class="cart-list" id="cart-list"></div>
+            <div id="cart-summary-card" class="cart-summary-card hidden">
+                <div class="summary-row">
+                    <span>Mahsulotlar:</span>
+                    <span id="cart-sum-items">0 ta</span>
+                </div>
+                <div class="summary-row total">
+                    <span>Jami:</span>
+                    <span id="cart-sum-total">0 so'm</span>
+                </div>
+                <button class="btn-order-large" onclick="App.submitOrder()">
+                    <span id="order-btn-text">Buyurtma berish</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ========== TAB: CHAT ========== -->
+        <div id="tab-chat" class="tab-screen hidden">
+            <header class="app-header">
+                <h1 class="section-title">💬 Admin bilan suhbat</h1>
+                <p class="section-sub">Savol bering — admin javob beradi</p>
+            </header>
+            <div class="chat-window" id="chat-window"></div>
+            <form id="chat-form" class="chat-form-app" onsubmit="App.sendMessage(event)">
+                <input id="chat-input" type="text" placeholder="Xabar yozing..." autocomplete="off" maxlength="2000" required>
+                <button type="submit" class="chat-send-btn">▶</button>
+            </form>
+        </div>
+
+        <!-- ========== Bottom nav ========== -->
+        <nav id="bottom-nav" class="bottom-nav hidden">
+            <button class="nav-item active" data-tab="home" onclick="App.switchTab('home')">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Asosiy</span>
+            </button>
+            <button class="nav-item" data-tab="cart" onclick="App.switchTab('cart')">
+                <span class="nav-icon">🛒</span>
+                <span class="nav-label">Savatim</span>
+                <span class="nav-badge hidden" id="nav-cart-badge">0</span>
+            </button>
+            <button class="nav-item" data-tab="chat" onclick="App.switchTab('chat')">
+                <span class="nav-icon">💬</span>
+                <span class="nav-label">Chat</span>
+                <span class="nav-badge hidden" id="nav-chat-badge">0</span>
+            </button>
+        </nav>
+
+        <div id="toast" class="toast hidden"></div>
+    </div>
+    <script src="/static/webapp/app.js"></script>
+</body>
+</html>

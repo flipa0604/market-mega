@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Chat: {{ u.full_name }} — Market Mega{% endblock %}
+{% block content %}
+<header class="page-header">
+    <div>
+        <h1>{{ u.full_name }} <span class="muted" style="font-size:14px">{% if u.username %}@{{ u.username }}{% endif %}</span></h1>
+        <p class="muted">📞 {{ u.phone or "—" }} · TG ID: {{ u.telegram_id }}</p>
+    </div>
+    <a href="/admin/chat" class="btn-secondary">← Ro'yxatga qaytish</a>
+</header>
+
+<div class="chat-window" id="chat-window" data-user-id="{{ u.id }}">
+    {% for m in messages %}
+        <div class="chat-bubble bubble-{{ m.sender.value }}" data-id="{{ m.id }}">
+            <div class="bubble-text">{{ m.text }}</div>
+            <div class="bubble-time">{{ m.created_at.strftime("%H:%M") }}</div>
+        </div>
+    {% else %}
+        <div class="chat-empty">Hali xabar yo'q. Birinchi yozing!</div>
+    {% endfor %}
+</div>
+
+<form method="post" action="/admin/chat/{{ u.id }}/send" class="chat-form" id="chat-form">
+    <input type="text" name="text" placeholder="Xabar yozing..." autocomplete="off" required maxlength="2000" autofocus>
+    <button type="submit" class="btn-primary">Yuborish</button>
+</form>
+
+<script>
+(function() {
+    const win = document.getElementById('chat-window');
+    win.scrollTop = win.scrollHeight;
+
+    const userId = win.dataset.userId;
+    let lastId = 0;
+    document.querySelectorAll('.chat-bubble').forEach(b => {
+        const id = parseInt(b.dataset.id, 10);
+        if (id > lastId) lastId = id;
+    });
+
+    function escapeHtml(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    async function poll() {
+        try {
+            const res = await fetch(`/admin/chat/${userId}/messages.json?after_id=${lastId}`);
+            if (!res.ok) return;
+            const data = await res.json();
+            for (const m of data.messages) {
+                const div = document.createElement('div');
+                div.className = 'chat-bubble bubble-' + m.sender;
+                div.dataset.id = m.id;
+                const t = new Date(m.created_at);
+                const hh = String(t.getHours()).padStart(2, '0');
+                const mm = String(t.getMinutes()).padStart(2, '0');
+                div.innerHTML = `<div class="bubble-text">${escapeHtml(m.text)}</div><div class="bubble-time">${hh}:${mm}</div>`;
+                win.appendChild(div);
+                if (m.id > lastId) lastId = m.id;
+            }
+            if (data.messages.length) win.scrollTop = win.scrollHeight;
+        } catch (e) {}
+    }
+    setInterval(poll, 3000);
+})();
+</script>
+{% endblock %}

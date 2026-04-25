@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Kategoriyalar — Market Mega{% endblock %}
+{% block content %}
+<header class="page-header">
+    <div>
+        <h1>Kategoriyalar</h1>
+        <p class="muted">Jami: {{ categories|length }}</p>
+    </div>
+    <button type="button" class="btn-primary" onclick="document.getElementById('new-cat').classList.toggle('hidden')">
+        + Yangi kategoriya
+    </button>
+</header>
+
+<div id="new-cat" class="card hidden">
+    <h3>Yangi kategoriya</h3>
+    <form method="post" action="/admin/categories" enctype="multipart/form-data" class="form-grid">
+        <label class="field">
+            <span>Nomi</span>
+            <input type="text" name="name" required>
+        </label>
+        <label class="field">
+            <span>Tartib raqami</span>
+            <input type="number" name="sort_order" value="0">
+        </label>
+        <label class="field">
+            <span>Rasm (ixtiyoriy)</span>
+            <input type="file" name="image" accept="image/*">
+        </label>
+        <button type="submit" class="btn-primary">Saqlash</button>
+    </form>
+</div>
+
+<div class="cards-grid">
+    {% for cat in categories %}
+    <div class="card category-card">
+        <div class="cat-image">
+            {% if cat.image %}
+                <img src="{{ cat.image }}" alt="{{ cat.name }}">
+            {% else %}
+                <div class="image-placeholder">▤</div>
+            {% endif %}
+        </div>
+        <form method="post" action="/admin/categories/{{ cat.id }}/update" enctype="multipart/form-data" class="form-grid">
+            <label class="field">
+                <span>Nomi</span>
+                <input type="text" name="name" value="{{ cat.name }}" required>
+            </label>
+            <label class="field row">
+                <span>Tartib</span>
+                <input type="number" name="sort_order" value="{{ cat.sort_order }}">
+            </label>
+            <label class="checkbox">
+                <input type="checkbox" name="is_active" {% if cat.is_active %}checked{% endif %}>
+                Faol
+            </label>
+            <label class="field">
+                <span>Yangi rasm (agar kerak bo'lsa)</span>
+                <input type="file" name="image" accept="image/*">
+            </label>
+            <div class="btn-row">
+                <button type="submit" class="btn-primary">Saqlash</button>
+            </div>
+        </form>
+        <form method="post" action="/admin/categories/{{ cat.id }}/delete"
+              onsubmit="return confirm('Kategoriya va unga tegishli mahsulotlar o\'chadi. Davom etamizmi?');">
+            <button type="submit" class="btn-danger">O'chirish</button>
+        </form>
+    </div>
+    {% else %}
+        <div class="empty-state">Hali kategoriyalar yo'q. "Yangi kategoriya" tugmasini bosing.</div>
+    {% endfor %}
+</div>
+{% endblock %}

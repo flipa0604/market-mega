@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Chat — Market Mega{% endblock %}
+{% block content %}
+<header class="page-header">
+    <div>
+        <h1>Mijozlar bilan suhbat</h1>
+        <p class="muted">Jami: {{ rows|length }}</p>
+    </div>
+</header>
+
+<div class="chat-users-list">
+    {% for r in rows %}
+    <a href="/admin/chat/{{ r.user.id }}" class="chat-user-row">
+        <div class="chat-avatar">{{ (r.user.full_name or "?")[0]|upper }}</div>
+        <div class="chat-user-info">
+            <div class="chat-user-name">
+                {{ r.user.full_name }}
+                {% if r.user.username %}<span class="muted">@{{ r.user.username }}</span>{% endif %}
+            </div>
+            <div class="chat-user-sub">
+                📞 {{ r.user.phone or "—" }} ·
+                🕒 {{ r.last_at.strftime("%Y-%m-%d %H:%M") }}
+            </div>
+        </div>
+        {% if r.unread > 0 %}
+            <span class="unread-badge">{{ r.unread }}</span>
+        {% endif %}
+    </a>
+    {% else %}
+        <div class="empty-state">Hali xabarlar yo'q. Mijozlar mini app ichidan «Chat» bo'limiga yozsa, shu yerda paydo bo'ladi.</div>
+    {% endfor %}
+</div>
+{% endblock %}

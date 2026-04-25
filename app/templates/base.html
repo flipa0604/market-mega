@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Market Mega — Admin{% endblock %}</title>
+    <link rel="stylesheet" href="/static/admin/admin.css">
+</head>
+<body>
+    {% if admin is defined and admin %}
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <span class="brand-logo">MM</span>
+            <div>
+                <div class="brand-title">Market Mega</div>
+                <div class="brand-sub">Admin panel</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/admin" class="{% if request.url.path == '/admin' or request.url.path == '/admin/' %}active{% endif %}">
+                <span class="nav-ic">◉</span> Bosh sahifa
+            </a>
+            <a href="/admin/categories" class="{% if '/admin/categories' in request.url.path %}active{% endif %}">
+                <span class="nav-ic">▤</span> Kategoriyalar
+            </a>
+            <a href="/admin/products" class="{% if '/admin/products' in request.url.path %}active{% endif %}">
+                <span class="nav-ic">▦</span> Mahsulotlar
+            </a>
+            <a href="/admin/orders" class="{% if '/admin/orders' in request.url.path %}active{% endif %}">
+                <span class="nav-ic">▶</span> Buyurtmalar
+            </a>
+            <a href="/admin/chat" class="{% if '/admin/chat' in request.url.path %}active{% endif %}">
+                <span class="nav-ic">✉</span> Chat
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-chip">
+                <div class="user-avatar">{{ admin[0]|upper }}</div>
+                <div>
+                    <div class="user-name">{{ admin }}</div>
+                    <a href="/admin/logout" class="logout-link">Chiqish</a>
+                </div>
+            </div>
+        </div>
+    </aside>
+    <main class="main">
+        {% block content %}{% endblock %}
+    </main>
+    {% else %}
+        {% block auth_content %}{% endblock %}
+    {% endif %}
+</body>
+</html>

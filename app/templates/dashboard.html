@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Bosh sahifa — Market Mega{% endblock %}
+{% block content %}
+<header class="page-header">
+    <div>
+        <h1>Bosh sahifa</h1>
+        <p class="muted">Umumiy ko'rsatkichlar</p>
+    </div>
+</header>
+
+<section class="stats-grid">
+    <div class="stat-card stat-blue">
+        <div class="stat-value">{{ stats.categories }}</div>
+        <div class="stat-label">Kategoriyalar</div>
+    </div>
+    <div class="stat-card stat-green">
+        <div class="stat-value">{{ stats.products }}</div>
+        <div class="stat-label">Mahsulotlar</div>
+    </div>
+    <div class="stat-card stat-purple">
+        <div class="stat-value">{{ stats.users }}</div>
+        <div class="stat-label">Foydalanuvchilar</div>
+    </div>
+    <div class="stat-card stat-orange">
+        <div class="stat-value">{{ stats.orders }}</div>
+        <div class="stat-label">Jami buyurtma</div>
+    </div>
+    <div class="stat-card stat-red">
+        <div class="stat-value">{{ stats.pending }}</div>
+        <div class="stat-label">Yangi buyurtma</div>
+    </div>
+</section>
+
+<section class="quick-actions">
+    <a href="/admin/products" class="action-tile">
+        <span class="action-ic">▦</span>
+        <div>
+            <strong>Mahsulot qo'shish</strong>
+            <p>Yangi mahsulot katalogga qo'shing</p>
+        </div>
+    </a>
+    <a href="/admin/categories" class="action-tile">
+        <span class="action-ic">▤</span>
+        <div>
+            <strong>Kategoriya boshqarish</strong>
+            <p>Kategoriya yarating va tartiblang</p>
+        </div>
+    </a>
+    <a href="/admin/orders" class="action-tile">
+        <span class="action-ic">▶</span>
+        <div>
+            <strong>Buyurtmalarni ko'rish</strong>
+            <p>Yangi buyurtmalarni qayta ishlang</p>
+        </div>
+    </a>
+</section>
+{% endblock %}

@@ -1,0 +1,219 @@
+"""
+Mini App uchun JSON API.
+
+Frontend barcha so'rovlarga `X-Telegram-Init-Data` sarlavhasini qo'shadi.
+Autentifikatsiya `get_webapp_user` dependency ichida bajariladi.
+"""
+from decimal import Decimal
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
+from app.database import get_db
+from app.models import (
+    Category,
+    Message,
+    MessageSender,
+    Order,
+    OrderItem,
+    OrderStatus,
+    Product,
+    User,
+)
+from app.schemas.webapp import (
+    CategoryOut,
+    MessageCreate,
+    MessageOut,
+    OrderCreate,
+    OrderCreateResponse,
+    ProductOut,
+)
+from app.utils.admin_lookup import get_admin_chat_id
+from app.utils.deps import get_webapp_user
+
+router = APIRouter(prefix="/api", tags=["webapp"])
+
+
+@router.get("/me")
+async def me(user: User = Depends(get_webapp_user)) -> dict:
+    return {
+        "id": user.id,
+        "telegram_id": user.telegram_id,
+        "full_name": user.full_name,
+        "phone": user.phone,
+    }
+
+
+@router.get("/categories", response_model=list[CategoryOut])
+async def list_categories(
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(get_webapp_user),
+) -> list[Category]:
+    result = await db.execute(
+        select(Category)
+        .where(Category.is_active.is_(True))
+        .order_by(Category.sort_order, Category.name)
+    )
+    return list(result.scalars().all())
+
+
+@router.get("/categories/{category_id}/products", response_model=list[ProductOut])
+async def list_products(
+    category_id: int,
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(get_webapp_user),
+) -> list[Product]:
+    result = await db.execute(
+        select(Product)
+        .where(Product.category_id == category_id, Product.is_active.is_(True))
+        .order_by(Product.name)
+    )
+    return list(result.scalars().all())
+
+
+@router.post("/orders", response_model=OrderCreateResponse)
+async def create_order(
+    payload: OrderCreate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_webapp_user),
+) -> OrderCreateResponse:
+    # Mahsulotlarni bazadan olamiz (narxni mijozga ishonmaymiz)
+    product_ids = [item.product_id for item in payload.items]
+    result = await db.execute(
+        select(Product).where(Product.id.in_(product_ids), Product.is_active.is_(True))
+    )
+    products = {p.id: p for p in result.scalars().all()}
+
+    missing = [pid for pid in product_ids if pid not in products]
+    if missing:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Mahsulotlar topilmadi yoki nofaol: {missing}",
+        )
+
+    order = Order(
+        user_id=user.id,
+        status=OrderStatus.pending_location,
+        customer_name=user.full_name,
+        customer_phone=user.phone,
+        total_price=0,
+    )
+    db.add(order)
+    await db.flush()  # order.id olish uchun
+
+    total = Decimal("0")
+    for item in payload.items:
+        product = products[item.product_id]
+        unit_price = Decimal(str(product.price))
+        total += unit_price * item.quantity
+        db.add(
+            OrderItem(
+                order_id=order.id,
+                product_id=product.id,
+                product_name=product.name,
+                unit_price=unit_price,
+                quantity=item.quantity,
+            )
+        )
+
+    order.total_price = float(total)
+    await db.commit()
+    await db.refresh(order)
+
+    return OrderCreateResponse(
+        order_id=order.id,
+        total_price=float(order.total_price),
+    )
+
+
+@router.get("/messages", response_model=list[MessageOut])
+async def list_messages(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_webapp_user),
+) -> list[Message]:
+    result = await db.execute(
+        select(Message)
+        .where(Message.user_id == user.id)
+        .order_by(Message.created_at.asc())
+        .limit(200)
+    )
+    msgs = list(result.scalars().all())
+    # User chat ochganda admin xabarlarini "o'qildi" deb belgilash
+    await db.execute(
+        Message.__table__.update()
+        .where(
+            Message.user_id == user.id,
+            Message.sender == MessageSender.admin,
+            Message.is_read.is_(False),
+        )
+        .values(is_read=True)
+    )
+    await db.commit()
+    return msgs
+
+
+@router.post("/messages", response_model=MessageOut)
+async def send_message(
+    payload: MessageCreate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_webapp_user),
+) -> Message:
+    msg = Message(
+        user_id=user.id,
+        sender=MessageSender.user,
+        text=payload.text.strip(),
+        is_read=False,
+    )
+    db.add(msg)
+    await db.commit()
+    await db.refresh(msg)
+
+    # Admin'ga Telegram orqali notification
+    admin_chat_id = await get_admin_chat_id(db)
+    if admin_chat_id:
+        try:
+            from app.bot.bot import bot
+
+            await bot.send_message(
+                admin_chat_id,
+                f"💬 <b>{user.full_name}</b> "
+                f"({'@' + user.username if user.username else user.phone or ''}):\n\n"
+                f"{payload.text}\n\n"
+                f"<i>Javob berish: Admin paneldan «Chat» bo'limini oching</i>",
+            )
+        except Exception:  # noqa: BLE001
+            pass
+
+    return msg
+
+
+@router.get("/orders/{order_id}")
+async def get_order(
+    order_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_webapp_user),
+) -> dict:
+    result = await db.execute(
+        select(Order)
+        .where(Order.id == order_id, Order.user_id == user.id)
+        .options(selectinload(Order.items))
+    )
+    order = result.scalar_one_or_none()
+    if not order:
+        raise HTTPException(status_code=404, detail="Buyurtma topilmadi")
+
+    return {
+        "id": order.id,
+        "status": order.status.value,
+        "total_price": float(order.total_price),
+        "items": [
+            {
+                "product_name": it.product_name,
+                "quantity": it.quantity,
+                "unit_price": float(it.unit_price),
+            }
+            for it in order.items
+        ],
+    }

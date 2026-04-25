@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Kirish — Market Mega{% endblock %}
+{% block auth_content %}
+<div class="login-wrap">
+    <form class="login-card" method="post" action="/admin/login">
+        <div class="login-logo">MM</div>
+        <h1 class="login-title">Admin panel</h1>
+        <p class="login-sub">Market Mega boshqaruvi</p>
+
+        {% if error %}<div class="alert-error">{{ error }}</div>{% endif %}
+
+        <label class="field">
+            <span>Login</span>
+            <input type="text" name="username" autocomplete="username" required autofocus>
+        </label>
+        <label class="field">
+            <span>Parol</span>
+            <input type="password" name="password" autocomplete="current-password" required>
+        </label>
+        <button type="submit" class="btn-primary">Kirish</button>
+    </form>
+</div>
+{% endblock %}
