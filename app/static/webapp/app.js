@@ -41,14 +41,15 @@
         if (window.Telegram?.WebApp) window.Telegram.WebApp.close();
     };
 
-    // Telegram ichida emasligini aniqlash:
-    // - tg yo'q (Telegram SDK ulana olmadi), YOKI
-    // - initData bo'sh (brauzerdan kirilgan)
-    // Bu hollarda chiroyli landing ko'rsatamiz
-    const initData = extractInitData();
-    const isInTelegram = tg && tg.platform && tg.platform !== 'unknown' && initData;
+    if (!tg) {
+        document.getElementById('loader').classList.add('hidden');
+        showLanding();
+        return;
+    }
 
-    if (!isInTelegram) {
+    const initData = extractInitData();
+    if (!initData) {
+        document.getElementById('loader').classList.add('hidden');
         showLanding();
         return;
     }

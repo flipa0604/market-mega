@@ -1,4 +1,6 @@
 from aiogram.types import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
     KeyboardButton,
     ReplyKeyboardMarkup,
     ReplyKeyboardRemove,
@@ -20,17 +22,49 @@ def phone_request_kb() -> ReplyKeyboardMarkup:
 
 
 def main_menu_kb() -> ReplyKeyboardMarkup:
+    """Oddiy foydalanuvchi uchun: faqat market"""
     return ReplyKeyboardMarkup(
         keyboard=[
             [
                 KeyboardButton(
-                    text="🛍 Do'konni ochish",
+                    text="🛍 Doʻkonni ochish",
                     web_app=WebAppInfo(url=settings.WEBAPP_URL),
                 )
             ],
             [KeyboardButton(text="📞 Yordam")],
         ],
         resize_keyboard=True,
+    )
+
+
+def admin_menu_kb() -> ReplyKeyboardMarkup:
+    """Admin uchun: market + admin paneliga link"""
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                KeyboardButton(
+                    text="🛍 Doʻkonni ochish",
+                    web_app=WebAppInfo(url=settings.WEBAPP_URL),
+                )
+            ],
+            [KeyboardButton(text="🛠 Admin panel"), KeyboardButton(text="📊 Buyurtmalar")],
+            [KeyboardButton(text="📞 Yordam")],
+        ],
+        resize_keyboard=True,
+    )
+
+
+def admin_panel_inline_kb() -> InlineKeyboardMarkup:
+    """Admin panel'ga to'g'ridan-to'g'ri inline link tugma"""
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="🛠 Admin panelni ochish",
+                    url=settings.admin_url,
+                )
+            ]
+        ]
     )
 
 

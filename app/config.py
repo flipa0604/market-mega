@@ -47,6 +47,22 @@ class Settings(BaseSettings):
 
     # Derived paths
     @property
+    def base_url(self) -> str:
+        """WEBAPP_URL'dan domen qismini ajratib olish.
+        WEBAPP_URL=https://nodirmega.uz/app  ->  https://nodirmega.uz
+        """
+        url = self.WEBAPP_URL.rstrip("/")
+        for suffix in ("/app", "/webapp"):
+            if url.endswith(suffix):
+                return url[: -len(suffix)]
+        return url
+
+    @property
+    def admin_url(self) -> str:
+        """Admin panel URL: https://nodirmega.uz/admin"""
+        return f"{self.base_url}/admin"
+
+    @property
     def uploads_dir(self) -> Path:
         path = BASE_DIR / "app" / "static" / "uploads"
         path.mkdir(parents=True, exist_ok=True)

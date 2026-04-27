@@ -20,14 +20,17 @@ from sqlalchemy.orm import selectinload
 
 from app.bot.bot import bot
 from app.bot.keyboards import (
+    admin_menu_kb,
+    admin_panel_inline_kb,
     location_request_kb,
     main_menu_kb,
     phone_request_kb,
     remove_kb,
 )
+from app.config import settings
 from app.database import AsyncSessionLocal
 from app.models import Order, OrderStatus, User
-from app.utils.admin_lookup import get_admin_chat_id
+from app.utils.admin_lookup import get_admin_chat_id, is_admin_user
 
 router = Router(name="main")
 
@@ -62,18 +65,33 @@ async def cmd_start(message: Message, state: FSMContext) -> None:
             await db.commit()
             await db.refresh(user)
 
-        if not user.phone:
-            await message.answer(
-                f"👋 Assalomu alaykum, <b>{user.full_name}</b>!\n\n"
-                "Buyurtma berish uchun avval telefon raqamingizni yuboring.\n"
-                "Quyidagi tugmani bosing:",
-                reply_markup=phone_request_kb(),
-            )
-            return
+    # ============ ADMIN ============
+    if is_admin_user(tg_user):
+        await message.answer(
+            f"👋 Assalomu alaykum, <b>{user.full_name}</b>!\n\n"
+            "Siz <b>admin</b> sifatida tizimga kirgansiz.\n"
+            "Quyidagi tugmalardan birini tanlang:",
+            reply_markup=admin_menu_kb(),
+        )
+        await message.answer(
+            "🛠 <b>Admin panelni ochish:</b>",
+            reply_markup=admin_panel_inline_kb(),
+        )
+        return
+
+    # ============ ODDIY FOYDALANUVCHI ============
+    if not user.phone:
+        await message.answer(
+            f"👋 Assalomu alaykum, <b>{user.full_name}</b>!\n\n"
+            "Buyurtma berish uchun avval telefon raqamingizni yuboring.\n"
+            "Quyidagi tugmani bosing:",
+            reply_markup=phone_request_kb(),
+        )
+        return
 
     await message.answer(
         f"Xush kelibsiz, <b>{user.full_name}</b>! 🛍\n\n"
-        "Do'konga kirish uchun pastdagi tugmani bosing.",
+        "Doʻkonga kirish uchun pastdagi tugmani bosing.",
         reply_markup=main_menu_kb(),
     )
 
@@ -119,6 +137,28 @@ async def handle_contact(message: Message) -> None:
 # ---------------------------------------------------------------
 # Yordam tugmasi
 # ---------------------------------------------------------------
+
+
+# Admin tugmalari
+@router.message(F.text == "🛠 Admin panel")
+async def admin_panel_btn(message: Message) -> None:
+    if not is_admin_user(message.from_user):
+        return
+    await message.answer(
+        "🛠 <b>Admin panel:</b>",
+        reply_markup=admin_panel_inline_kb(),
+    )
+
+
+@router.message(F.text == "📊 Buyurtmalar")
+async def admin_orders_btn(message: Message) -> None:
+    if not is_admin_user(message.from_user):
+        return
+    from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+    kb = InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(text="📊 Buyurtmalar ro'yxati", url=f"{settings.admin_url}/orders")
+    ]])
+    await message.answer("📊 <b>Buyurtmalar:</b>", reply_markup=kb)
 
 
 @router.message(F.text == "📞 Yordam")

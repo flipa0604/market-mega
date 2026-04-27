@@ -74,16 +74,23 @@ app.include_router(webapp_router.router)
 app.include_router(admin_router.router)
 
 
-# ---------- Mini app sahifasi ----------
+# ---------- Routing ----------
+# Brauzerdan kirgan foydalanuvchilar admin panelga yo'naltiriladi
 @app.get("/", include_in_schema=False)
 async def root():
-    """Bosh URL mini appni ko'rsatadi (bot WEBAPP_URL shu bo'ladi)."""
-    return FileResponse(settings.static_dir / "webapp" / "index.html")
+    return RedirectResponse("/admin", status_code=302)
 
 
-@app.get("/webapp", include_in_schema=False)
+# Mini App — faqat Telegram uchun (WEBAPP_URL bu yerga ko'rsatadi)
+@app.get("/app", include_in_schema=False)
 async def webapp_page():
     return FileResponse(settings.static_dir / "webapp" / "index.html")
+
+
+# Eski URL'lar bilan moslik (agar kimdir ulanib qolgan bo'lsa)
+@app.get("/webapp", include_in_schema=False)
+async def webapp_legacy():
+    return RedirectResponse("/app", status_code=301)
 
 
 @app.get("/admin-login", include_in_schema=False)
