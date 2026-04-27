@@ -9,13 +9,14 @@ Oqim:
 """
 import json
 from datetime import datetime, timezone
+from decimal import Decimal
 
 from aiogram import F, Router
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import selectinload
 
 from app.bot.bot import bot
@@ -29,7 +30,7 @@ from app.bot.keyboards import (
 )
 from app.config import settings
 from app.database import AsyncSessionLocal
-from app.models import Order, OrderStatus, User
+from app.models import CartItem, Order, OrderItem, OrderStatus, User
 from app.utils.admin_lookup import get_admin_chat_id, is_admin_user
 
 router = Router(name="main")
@@ -161,13 +162,106 @@ async def admin_orders_btn(message: Message) -> None:
     await message.answer("📊 <b>Buyurtmalar:</b>", reply_markup=kb)
 
 
+@router.message(F.text == "🛒 Buyurtma yuborish")
+async def submit_order_btn(message: Message, state: FSMContext) -> None:
+    """Foydalanuvchi cart'ini Order'ga aylantirib, lokatsiya so'raydi."""
+    tg_user = message.from_user
+    if not tg_user:
+        return
+
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(select(User).where(User.telegram_id == tg_user.id))
+        user = result.scalar_one_or_none()
+        if not user:
+            await message.answer("Avval /start yuboring.")
+            return
+
+        if not user.phone:
+            await message.answer(
+                "📱 Buyurtma berishdan oldin telefon raqamingizni yuboring:",
+                reply_markup=phone_request_kb(),
+            )
+            return
+
+        # Cart o'qish
+        cart_result = await db.execute(
+            select(CartItem)
+            .where(CartItem.user_id == user.id)
+            .options(selectinload(CartItem.product))
+        )
+        cart_items = list(cart_result.scalars().all())
+        active_items = [
+            ci for ci in cart_items if ci.product and ci.product.is_active
+        ]
+
+        if not active_items:
+            await message.answer(
+                "🛒 <b>Savatingiz boʻsh.</b>\n\n"
+                "Pastdagi <b>Menu (☰)</b> tugmasini bosib doʻkon ochiladi.\n"
+                "Mahsulot tanlang va qaytadan urinib koʻring."
+            )
+            return
+
+        # Order yaratish
+        order = Order(
+            user_id=user.id,
+            status=OrderStatus.pending_location,
+            customer_name=user.full_name,
+            customer_phone=user.phone,
+            total_price=0,
+        )
+        db.add(order)
+        await db.flush()
+
+        total = Decimal("0")
+        item_lines = []
+        for ci in active_items:
+            unit = Decimal(str(ci.product.price))
+            line_total = unit * ci.quantity
+            total += line_total
+            db.add(
+                OrderItem(
+                    order_id=order.id,
+                    product_id=ci.product_id,
+                    product_name=ci.product.name,
+                    unit_price=unit,
+                    quantity=ci.quantity,
+                )
+            )
+            item_lines.append(
+                f"  • {ci.product.name} × {ci.quantity} = "
+                f"{float(line_total):,.0f} so'm"
+            )
+        order.total_price = float(total)
+
+        # Cart'ni tozalash
+        await db.execute(delete(CartItem).where(CartItem.user_id == user.id))
+        await db.commit()
+        await db.refresh(order)
+
+        order_id = order.id
+        items_text = "\n".join(item_lines)
+        total_float = float(total)
+
+    await state.update_data(order_id=order_id)
+    await state.set_state(OrderFlow.waiting_for_location)
+
+    await message.answer(
+        f"📦 <b>Buyurtma #{order_id}</b>\n\n"
+        f"{items_text}\n\n"
+        f"<b>Jami: {total_float:,.0f} so'm</b>\n\n"
+        f"📍 Yetkazib berish uchun <b>lokatsiyangizni</b> yuboring:",
+        reply_markup=location_request_kb(),
+    )
+
+
 @router.message(F.text == "📞 Yordam")
 async def help_btn(message: Message) -> None:
     await message.answer(
         "ℹ️ <b>Buyurtma berish tartibi</b>\n\n"
         "1. Pastda chap tomondagi <b>Menu (☰)</b> tugmasini bosing — doʻkon ochiladi\n"
         "2. Kategoriyani tanlang, mahsulotlardan <b>+</b> bilan soni oshiring\n"
-        "3. <b>🛒 Savatim</b> tab'iga oʻting va «<b>Buyurtma berish</b>» tugmasini bosing\n"
+        "3. Mini appni yoping va chatdagi «<b>🛒 Buyurtma yuborish</b>» tugmasini bosing\n"
         "4. Bot soʻraganda <b>lokatsiyangizni</b> yuboring\n"
         "5. Admin siz bilan bogʻlanadi\n\n"
         "<b>💬 Chat:</b> Mini app'ning «Chat» tab'i orqali admin'ga xabar yozishingiz mumkin."
@@ -180,48 +274,12 @@ async def help_btn(message: Message) -> None:
 
 
 @router.message(F.web_app_data)
-async def handle_webapp_data(message: Message, state: FSMContext) -> None:
-    raw = message.web_app_data.data if message.web_app_data else None
-    if not raw:
-        return
-    try:
-        payload = json.loads(raw)
-    except json.JSONDecodeError:
-        await message.answer("❌ Noto'g'ri ma'lumot keldi.")
-        return
-
-    order_id = payload.get("order_id")
-    if not order_id:
-        await message.answer("❌ Buyurtma ID topilmadi.")
-        return
-
-    async with AsyncSessionLocal() as db:
-        result = await db.execute(
-            select(Order)
-            .where(Order.id == order_id)
-            .options(selectinload(Order.items))
-        )
-        order = result.scalar_one_or_none()
-        if not order:
-            await message.answer("❌ Buyurtma topilmadi.")
-            return
-
-        items_text = "\n".join(
-            f"  • {it.product_name} × {it.quantity} = "
-            f"{float(it.unit_price) * it.quantity:,.0f} so'm"
-            for it in order.items
-        )
-        total = float(order.total_price)
-
-    await state.update_data(order_id=order_id)
-    await state.set_state(OrderFlow.waiting_for_location)
-
+async def handle_webapp_data(message: Message) -> None:
+    """Eski mini app versiyalari uchun fallback (foydalanmaydi)."""
     await message.answer(
-        f"📦 <b>Buyurtma #{order_id} qabul qilindi!</b>\n\n"
-        f"{items_text}\n\n"
-        f"<b>Jami: {total:,.0f} so'm</b>\n\n"
-        f"📍 Yetkazib berish uchun <b>lokatsiyangizni</b> yuboring:",
-        reply_markup=location_request_kb(),
+        "ℹ️ Endi buyurtma yuborish boshqa usulda ishlaydi.\n\n"
+        "Pastdagi <b>«🛒 Buyurtma yuborish»</b> tugmasini bosing.",
+        reply_markup=main_menu_kb(),
     )
 
 

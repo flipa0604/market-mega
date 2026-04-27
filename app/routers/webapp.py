@@ -7,12 +7,14 @@ Autentifikatsiya `get_webapp_user` dependency ichida bajariladi.
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import delete, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
 from app.models import (
+    CartItem,
     Category,
     Message,
     MessageSender,
@@ -23,6 +25,8 @@ from app.models import (
     User,
 )
 from app.schemas.webapp import (
+    CartItemIn,
+    CartItemOut,
     CategoryOut,
     MessageCreate,
     MessageOut,
@@ -126,6 +130,86 @@ async def create_order(
         order_id=order.id,
         total_price=float(order.total_price),
     )
+
+
+@router.get("/cart", response_model=list[CartItemOut])
+async def get_cart(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_webapp_user),
+) -> list[dict]:
+    """Foydalanuvchining savat ichidagi mahsulotlari."""
+    result = await db.execute(
+        select(CartItem)
+        .where(CartItem.user_id == user.id)
+        .options(selectinload(CartItem.product))
+        .order_by(CartItem.id)
+    )
+    items = list(result.scalars().all())
+    return [
+        {
+            "product_id": ci.product_id,
+            "quantity": ci.quantity,
+            "product": {
+                "id": ci.product.id,
+                "category_id": ci.product.category_id,
+                "name": ci.product.name,
+                "description": ci.product.description,
+                "price": float(ci.product.price),
+                "image": ci.product.image,
+            },
+        }
+        for ci in items
+        if ci.product and ci.product.is_active
+    ]
+
+
+@router.post("/cart")
+async def upsert_cart_item(
+    payload: CartItemIn,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_webapp_user),
+) -> dict:
+    """Savatga mahsulot qo'shish/yangilash. quantity=0 -> o'chirish."""
+    # Mahsulot mavjudligini tekshirish
+    product = await db.get(Product, payload.product_id)
+    if not product or not product.is_active:
+        raise HTTPException(404, "Mahsulot topilmadi yoki nofaol")
+
+    if payload.quantity <= 0:
+        await db.execute(
+            delete(CartItem).where(
+                CartItem.user_id == user.id,
+                CartItem.product_id == payload.product_id,
+            )
+        )
+    else:
+        # PostgreSQL UPSERT
+        stmt = (
+            pg_insert(CartItem)
+            .values(
+                user_id=user.id,
+                product_id=payload.product_id,
+                quantity=payload.quantity,
+            )
+            .on_conflict_do_update(
+                constraint="uq_cart_user_product",
+                set_={"quantity": payload.quantity},
+            )
+        )
+        await db.execute(stmt)
+
+    await db.commit()
+    return {"ok": True, "quantity": payload.quantity}
+
+
+@router.delete("/cart")
+async def clear_cart(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_webapp_user),
+) -> dict:
+    await db.execute(delete(CartItem).where(CartItem.user_id == user.id))
+    await db.commit()
+    return {"ok": True}
 
 
 @router.get("/messages", response_model=list[MessageOut])

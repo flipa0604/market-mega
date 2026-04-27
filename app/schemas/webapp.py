@@ -51,3 +51,15 @@ class OrderCreateResponse(BaseModel):
     order_id: int
     total_price: float
     message: str = "Buyurtma qabul qilindi. Botga qaytib, lokatsiya yuboring."
+
+
+class CartItemIn(BaseModel):
+    """0 quantity = ushbu mahsulotni savatdan olib tashlash"""
+    product_id: int
+    quantity: int = Field(ge=0, le=999)
+
+
+class CartItemOut(BaseModel):
+    product_id: int
+    quantity: int
+    product: ProductOut

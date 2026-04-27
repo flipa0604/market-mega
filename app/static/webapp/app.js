@@ -98,15 +98,38 @@
             state.user = await api('/api/me');
             state.categories = await api('/api/categories');
             document.getElementById('user-name').textContent = state.user.full_name || 'Mijoz';
+
+            // Server'dan saqlanib qolgan savatni yuklab olish
+            await loadCart();
+
             renderCategories();
             document.getElementById('loader').classList.add('hidden');
             document.getElementById('tab-home').classList.remove('hidden');
             document.getElementById('bottom-nav').classList.remove('hidden');
+            updateCartBadge();
+
             // Chatni fonda yuklab qo'yamiz
             loadMessages().catch(() => {});
         } catch (e) {
             document.getElementById('loader').classList.add('hidden');
             showError(e.message || 'Yuklashda xato');
+        }
+    }
+
+    async function loadCart() {
+        try {
+            const items = await api('/api/cart');
+            state.cart = {};
+            for (const it of items) {
+                state.cart[it.product_id] = {
+                    product: it.product,
+                    quantity: it.quantity,
+                };
+                state.productsById[it.product.id] = it.product;
+            }
+        } catch (_) {
+            // Savat bo'sh yoki xato — bo'sh holatda davom
+            state.cart = {};
         }
     }
 
@@ -224,11 +247,12 @@
         if (!product) return;
         const current = state.cart[productId]?.quantity || 0;
         const next = Math.max(0, Math.min(999, current + delta));
+        if (next === current) return;
 
+        // Optimistic UI update
         if (next === 0) delete state.cart[productId];
         else state.cart[productId] = { product, quantity: next };
 
-        // Mahsulot kartasi UI'ni yangilash (agar ko'rinib turgan bo'lsa)
         const qtyEl = document.getElementById(`qty-${productId}`);
         if (qtyEl) qtyEl.textContent = next;
         const card = document.querySelector(`.product-card[data-pid="${productId}"]`);
@@ -240,6 +264,36 @@
         updateCartBadge();
         if (state.currentTab === 'cart') renderCart();
         if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+
+        // Server'ga sinxronizatsiya
+        syncCartItem(productId, next);
+    }
+
+    // Bir vaqtda bitta mahsulot uchun bitta so'rov bo'lishi uchun queue
+    const _syncQueue = {};
+    async function syncCartItem(productId, quantity) {
+        // Eskirgan so'rovni almashtirish (eng yangi qiymat saqlanishi uchun)
+        _syncQueue[productId] = quantity;
+        if (_syncQueue['__busy_' + productId]) return;
+        _syncQueue['__busy_' + productId] = true;
+
+        try {
+            while (_syncQueue[productId] !== undefined) {
+                const target = _syncQueue[productId];
+                delete _syncQueue[productId];
+                try {
+                    await api('/api/cart', {
+                        method: 'POST',
+                        body: { product_id: productId, quantity: target },
+                    });
+                } catch (e) {
+                    // Xato bo'lsa toast ko'rsatish, lekin UI'ni o'zgartirmaslik
+                    showToast('Savat saqlanmadi: ' + (e.message || 'xato'));
+                }
+            }
+        } finally {
+            delete _syncQueue['__busy_' + productId];
+        }
     }
 
     // ---------------------- Cart ----------------------
@@ -307,26 +361,10 @@
         summary.classList.remove('hidden');
     }
 
-    // ---------------------- Submit order ----------------------
-    async function submitOrder() {
-        const { count } = cartTotals();
-        if (count === 0) return;
-        const items = Object.values(state.cart).map(({ product, quantity }) => ({
-            product_id: product.id, quantity,
-        }));
-        const btn = document.querySelector('.btn-order-large');
-        btn.disabled = true;
-        document.getElementById('order-btn-text').textContent = 'Yuborilmoqda...';
-        try {
-            const res = await api('/api/orders', { method: 'POST', body: { items } });
-            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-            tg.sendData(JSON.stringify({ order_id: res.order_id }));
-            setTimeout(() => tg.close(), 300);
-        } catch (e) {
-            showToast(e.message || 'Xato yuz berdi');
-            btn.disabled = false;
-            document.getElementById('order-btn-text').textContent = 'Buyurtma berish';
-        }
+    // ---------------------- Close app ----------------------
+    function closeApp() {
+        if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+        tg.close();
     }
 
     // ---------------------- Chat ----------------------
@@ -430,7 +468,7 @@
     // ---------------------- Public API ----------------------
     window.App = {
         switchTab, showCategories, openCategory, changeQty,
-        submitOrder, sendMessage,
+        closeApp, sendMessage,
     };
 
     init();

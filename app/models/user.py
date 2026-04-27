@@ -24,3 +24,6 @@ class User(Base):
     messages: Mapped[list["Message"]] = relationship(  # noqa: F821
         back_populates="user", cascade="all, delete-orphan"
     )
+    cart_items: Mapped[list["CartItem"]] = relationship(  # noqa: F821
+        back_populates="user", cascade="all, delete-orphan"
+    )

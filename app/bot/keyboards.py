@@ -21,11 +21,12 @@ def phone_request_kb() -> ReplyKeyboardMarkup:
 
 
 def main_menu_kb() -> ReplyKeyboardMarkup:
-    """Oddiy foydalanuvchi uchun: faqat Yordam.
+    """Oddiy foydalanuvchi uchun: Buyurtma yuborish + Yordam.
     Doʻkon chap tomondagi Menu (☰) tugmasi orqali ochiladi.
     """
     return ReplyKeyboardMarkup(
         keyboard=[
+            [KeyboardButton(text="🛒 Buyurtma yuborish")],
             [KeyboardButton(text="📞 Yordam")],
         ],
         resize_keyboard=True,
