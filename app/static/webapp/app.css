@@ -68,7 +68,11 @@ html, body {
 }
 .error-icon { font-size: 48px; }
 .error-box h2 { margin: 8px 0; }
-.error-box p { color: var(--hint); margin-bottom: 20px; }
+.error-box p {
+    color: var(--hint); margin-bottom: 20px;
+    white-space: pre-wrap; text-align: left; font-size: 12px;
+    word-break: break-all;
+}
 .btn-reload {
     background: var(--primary); color: #fff; border: none;
     padding: 12px 24px; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 14px;

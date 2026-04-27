@@ -34,7 +34,8 @@
 
     if (!tg) {
         document.getElementById('loader').classList.add('hidden');
-        showError("Telegram WebApp topilmadi. Bu sahifani Telegram ichidan oching.",
+        const dbg = `[debug] hash=${(window.location.hash||"").substring(0,40)} ua=${navigator.userAgent.substring(0,30)}`;
+        showError("Telegram WebApp topilmadi. Bu sahifani Telegram ichidan oching.\n\n" + dbg,
                   { showReload: true });
         return;
     }
@@ -42,7 +43,14 @@
     const initData = extractInitData();
     if (!initData) {
         document.getElementById('loader').classList.add('hidden');
-        showError("initData topilmadi. Mini app'ni yoping va Telegram'dan qayta oching.",
+        const dbg =
+            `\n\n[debug]\n` +
+            `tg.initData length: ${(tg.initData||"").length}\n` +
+            `tg.version: ${tg.version || "?"}\n` +
+            `tg.platform: ${tg.platform || "?"}\n` +
+            `hash: ${(window.location.hash||"EMPTY").substring(0, 60)}\n` +
+            `URL: ${window.location.href.substring(0, 80)}`;
+        showError("initData topilmadi. Mini app'ni yoping va Telegram'dan qayta oching." + dbg,
                   { showReload: false, showClose: true });
         return;
     }
