@@ -15,43 +15,41 @@
         return "";
     }
 
+    function hideAllScreens() {
+        ['loader', 'error-screen', 'landing-screen', 'tab-home', 'tab-cart', 'tab-chat', 'bottom-nav'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden');
+        });
+    }
+
     function showError(text, opts = {}) {
         document.getElementById('error-text').textContent = text;
         const r = document.getElementById('btn-reload');
         const c = document.getElementById('btn-close');
         if (r) r.style.display = (opts.showReload !== false) ? '' : 'none';
         if (c) c.style.display = (opts.showClose) ? '' : 'none';
-        ['loader', 'tab-home', 'tab-cart', 'tab-chat', 'bottom-nav'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.classList.add('hidden');
-        });
+        hideAllScreens();
         document.getElementById('error-screen').classList.remove('hidden');
+    }
+
+    function showLanding() {
+        hideAllScreens();
+        document.getElementById('landing-screen').classList.remove('hidden');
     }
 
     window.closeWebApp = function () {
         if (window.Telegram?.WebApp) window.Telegram.WebApp.close();
     };
 
-    if (!tg) {
-        document.getElementById('loader').classList.add('hidden');
-        const dbg = `[debug] hash=${(window.location.hash||"").substring(0,40)} ua=${navigator.userAgent.substring(0,30)}`;
-        showError("Telegram WebApp topilmadi. Bu sahifani Telegram ichidan oching.\n\n" + dbg,
-                  { showReload: true });
-        return;
-    }
-
+    // Telegram ichida emasligini aniqlash:
+    // - tg yo'q (Telegram SDK ulana olmadi), YOKI
+    // - initData bo'sh (brauzerdan kirilgan)
+    // Bu hollarda chiroyli landing ko'rsatamiz
     const initData = extractInitData();
-    if (!initData) {
-        document.getElementById('loader').classList.add('hidden');
-        const dbg =
-            `\n\n[debug]\n` +
-            `tg.initData length: ${(tg.initData||"").length}\n` +
-            `tg.version: ${tg.version || "?"}\n` +
-            `tg.platform: ${tg.platform || "?"}\n` +
-            `hash: ${(window.location.hash||"EMPTY").substring(0, 60)}\n` +
-            `URL: ${window.location.href.substring(0, 80)}`;
-        showError("initData topilmadi. Mini app'ni yoping va Telegram'dan qayta oching." + dbg,
-                  { showReload: false, showClose: true });
+    const isInTelegram = tg && tg.platform && tg.platform !== 'unknown' && initData;
+
+    if (!isInTelegram) {
+        showLanding();
         return;
     }
 

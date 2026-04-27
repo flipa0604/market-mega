@@ -277,6 +277,75 @@ html, body {
     min-width: 18px; text-align: center;
 }
 
+/* ===== Landing (brauzer uchun) ===== */
+#landing-screen {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+}
+.landing-wrap {
+    max-width: 420px; width: 100%;
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 28px;
+    padding: 36px 24px;
+    text-align: center;
+    color: #fff;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.25);
+}
+.landing-logo {
+    width: 72px; height: 72px; border-radius: 20px; margin: 0 auto 18px;
+    background: linear-gradient(135deg, #fff, #e0e7ff);
+    color: #4f46e5; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 24px; letter-spacing: 1px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+.landing-title {
+    font-size: 28px; font-weight: 800; margin: 0 0 6px;
+    letter-spacing: -0.3px;
+}
+.landing-sub {
+    color: rgba(255,255,255,0.85); margin: 0 0 28px; font-size: 15px;
+}
+
+.landing-features {
+    background: rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 16px; margin-bottom: 28px;
+    display: flex; flex-direction: column; gap: 12px;
+    text-align: left;
+}
+.landing-feature {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 14px; color: rgba(255,255,255,0.95);
+}
+.lf-icon { font-size: 20px; flex-shrink: 0; }
+
+.btn-open-tg {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: #fff; color: #4f46e5;
+    padding: 16px 24px; border-radius: 14px;
+    font-size: 16px; font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-open-tg:hover {
+    text-decoration: none; transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+}
+.btn-arrow {
+    font-size: 22px; line-height: 1; opacity: 0.6;
+}
+
+.landing-note {
+    margin-top: 20px; font-size: 12px;
+    color: rgba(255,255,255,0.75); line-height: 1.5;
+}
+
 /* ===== Toast / Empty ===== */
 .toast {
     position: fixed; bottom: calc(var(--nav-height) + var(--safe-bottom) + 16px);
