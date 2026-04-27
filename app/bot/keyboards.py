@@ -4,7 +4,6 @@ from aiogram.types import (
     KeyboardButton,
     ReplyKeyboardMarkup,
     ReplyKeyboardRemove,
-    WebAppInfo,
 )
 
 from app.config import settings
@@ -22,15 +21,11 @@ def phone_request_kb() -> ReplyKeyboardMarkup:
 
 
 def main_menu_kb() -> ReplyKeyboardMarkup:
-    """Oddiy foydalanuvchi uchun: faqat market"""
+    """Oddiy foydalanuvchi uchun: faqat Yordam.
+    Doʻkon chap tomondagi Menu (☰) tugmasi orqali ochiladi.
+    """
     return ReplyKeyboardMarkup(
         keyboard=[
-            [
-                KeyboardButton(
-                    text="🛍 Doʻkonni ochish",
-                    web_app=WebAppInfo(url=settings.WEBAPP_URL),
-                )
-            ],
             [KeyboardButton(text="📞 Yordam")],
         ],
         resize_keyboard=True,
@@ -38,15 +33,11 @@ def main_menu_kb() -> ReplyKeyboardMarkup:
 
 
 def admin_menu_kb() -> ReplyKeyboardMarkup:
-    """Admin uchun: market + admin paneliga link"""
+    """Admin uchun: admin panel + Buyurtmalar + Yordam.
+    Doʻkon chap tomondagi Menu (☰) tugmasi orqali ochiladi.
+    """
     return ReplyKeyboardMarkup(
         keyboard=[
-            [
-                KeyboardButton(
-                    text="🛍 Doʻkonni ochish",
-                    web_app=WebAppInfo(url=settings.WEBAPP_URL),
-                )
-            ],
             [KeyboardButton(text="🛠 Admin panel"), KeyboardButton(text="📊 Buyurtmalar")],
             [KeyboardButton(text="📞 Yordam")],
         ],

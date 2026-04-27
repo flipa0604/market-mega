@@ -91,7 +91,7 @@ async def cmd_start(message: Message, state: FSMContext) -> None:
 
     await message.answer(
         f"Xush kelibsiz, <b>{user.full_name}</b>! 🛍\n\n"
-        "Doʻkonga kirish uchun pastdagi tugmani bosing.",
+        "Doʻkonga kirish uchun pastda chap tomondagi <b>Menu (☰)</b> tugmasini bosing.",
         reply_markup=main_menu_kb(),
     )
 
@@ -164,12 +164,13 @@ async def admin_orders_btn(message: Message) -> None:
 @router.message(F.text == "📞 Yordam")
 async def help_btn(message: Message) -> None:
     await message.answer(
-        "ℹ️ <b>Yordam</b>\n\n"
-        "1. «🛍 Do'konni ochish» tugmasini bosing\n"
+        "ℹ️ <b>Buyurtma berish tartibi</b>\n\n"
+        "1. Pastda chap tomondagi <b>Menu (☰)</b> tugmasini bosing — doʻkon ochiladi\n"
         "2. Kategoriyani tanlang, mahsulotlardan <b>+</b> bilan soni oshiring\n"
-        "3. «Tanladim» tugmasini bosing\n"
-        "4. Bot so'raganda <b>lokatsiyangizni</b> yuboring\n"
-        "5. Admin siz bilan bog'lanadi"
+        "3. <b>🛒 Savatim</b> tab'iga oʻting va «<b>Buyurtma berish</b>» tugmasini bosing\n"
+        "4. Bot soʻraganda <b>lokatsiyangizni</b> yuboring\n"
+        "5. Admin siz bilan bogʻlanadi\n\n"
+        "<b>💬 Chat:</b> Mini app'ning «Chat» tab'i orqali admin'ga xabar yozishingiz mumkin."
     )
 
 
