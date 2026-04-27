@@ -31,7 +31,7 @@ from app.bot.keyboards import (
 from app.config import settings
 from app.database import AsyncSessionLocal
 from app.models import CartItem, Order, OrderItem, OrderStatus, User
-from app.utils.admin_lookup import get_admin_chat_id, is_admin_user
+from app.utils.admin_lookup import get_admin_chat_ids, is_admin_user
 
 router = Router(name="main")
 
@@ -359,13 +359,13 @@ async def handle_location(message: Message, state: FSMContext) -> None:
         reply_markup=main_menu_kb(),
     )
 
-    # Admin xabarnomasi (.env: ADMIN_TELEGRAM_ID yoki ADMIN_TG_USERNAME orqali)
+    # Admin xabarnomasi (barcha admin'larga)
     async with AsyncSessionLocal() as adb:
-        admin_chat_id = await get_admin_chat_id(adb)
-    if admin_chat_id:
+        admin_ids = await get_admin_chat_ids(adb)
+    for admin_id in admin_ids:
         try:
             await bot.send_message(
-                admin_chat_id,
+                admin_id,
                 f"🆕 <b>Yangi buyurtma #{order.id}</b>\n\n"
                 f"👤 {customer_name}\n"
                 f"📞 {customer_phone}\n\n"
@@ -373,7 +373,7 @@ async def handle_location(message: Message, state: FSMContext) -> None:
                 f"💰 Jami: <b>{float(order.total_price):,.0f} so'm</b>",
             )
             await bot.send_location(
-                admin_chat_id,
+                admin_id,
                 latitude=loc.latitude,
                 longitude=loc.longitude,
             )

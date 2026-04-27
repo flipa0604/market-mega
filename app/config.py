@@ -26,7 +26,8 @@ class Settings(BaseSettings):
     # Admin
     ADMIN_USERNAME: str = "nodirbek"
     ADMIN_PASSWORD: str = "zxcv1234"
-    ADMIN_TELEGRAM_ID: int | None = None
+    # Bir nechta admin ID vergul bilan kiritilishi mumkin: 123,456,789
+    ADMIN_TELEGRAM_ID: list[int] = []
     # @username (without @) — bot bu username bilan kelgan foydalanuvchini admin deb hisoblaydi
     ADMIN_TG_USERNAME: str | None = None
 
@@ -35,9 +36,17 @@ class Settings(BaseSettings):
 
     @field_validator("ADMIN_TELEGRAM_ID", mode="before")
     @classmethod
-    def _empty_admin_id(cls, v):
+    def _parse_admin_ids(cls, v):
+        """`.env`'dan int, vergul bilan ajratilgan str, yoki bo'sh qiymatni qabul qiladi."""
         if v in ("", None):
-            return None
+            return []
+        if isinstance(v, int):
+            return [v]
+        if isinstance(v, list):
+            return [int(x) for x in v]
+        if isinstance(v, str):
+            parts = [p.strip() for p in v.split(",") if p.strip()]
+            return [int(p) for p in parts]
         return v
 
     # Server

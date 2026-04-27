@@ -34,7 +34,7 @@ from app.schemas.webapp import (
     OrderCreateResponse,
     ProductOut,
 )
-from app.utils.admin_lookup import get_admin_chat_id
+from app.utils.admin_lookup import get_admin_chat_ids
 from app.utils.deps import get_webapp_user
 
 router = APIRouter(prefix="/api", tags=["webapp"])
@@ -254,21 +254,22 @@ async def send_message(
     await db.commit()
     await db.refresh(msg)
 
-    # Admin'ga Telegram orqali notification
-    admin_chat_id = await get_admin_chat_id(db)
-    if admin_chat_id:
-        try:
-            from app.bot.bot import bot
+    # Barcha admin'larga Telegram orqali notification
+    admin_ids = await get_admin_chat_ids(db)
+    if admin_ids:
+        from app.bot.bot import bot
 
-            await bot.send_message(
-                admin_chat_id,
-                f"💬 <b>{user.full_name}</b> "
-                f"({'@' + user.username if user.username else user.phone or ''}):\n\n"
-                f"{payload.text}\n\n"
-                f"<i>Javob berish: Admin paneldan «Chat» bo'limini oching</i>",
-            )
-        except Exception:  # noqa: BLE001
-            pass
+        text = (
+            f"💬 <b>{user.full_name}</b> "
+            f"({'@' + user.username if user.username else user.phone or ''}):\n\n"
+            f"{payload.text}\n\n"
+            f"<i>Javob berish: Admin paneldan «Chat» bo'limini oching</i>"
+        )
+        for admin_id in admin_ids:
+            try:
+                await bot.send_message(admin_id, text)
+            except Exception:  # noqa: BLE001
+                pass
 
     return msg
 
