@@ -1,47 +1,49 @@
 {% extends "base.html" %}
-{% block title %}Mahsulotlar — Market Mega{% endblock %}
+{% block title %}{{ category.name }} — Mahsulotlar{% endblock %}
 {% block content %}
 <header class="page-header">
     <div>
-        <h1>Mahsulotlar</h1>
-        <p class="muted">Jami: {{ products|length }}</p>
+        <div class="breadcrumb">
+            <a href="/admin/products">← Kategoriyalar</a>
+        </div>
+        <h1>📦 {{ category.name }}</h1>
+        <p class="muted">Jami: {{ products|length }} ta mahsulot</p>
     </div>
-    <button type="button" class="btn-primary" onclick="document.getElementById('new-prod').classList.toggle('hidden')">
+    <button type="button" class="btn-primary"
+            onclick="document.getElementById('new-prod').classList.toggle('hidden')">
         + Yangi mahsulot
     </button>
 </header>
 
 <div id="new-prod" class="card hidden">
-    <h3>Yangi mahsulot</h3>
-    {% if not categories %}
-        <p class="alert-error">Avval kategoriya yarating!</p>
-    {% else %}
+    <h3>«{{ category.name }}» kategoriyasiga yangi mahsulot</h3>
     <form method="post" action="/admin/products" enctype="multipart/form-data" class="form-grid">
+        <input type="hidden" name="category_id" value="{{ category.id }}">
+
         <label class="field">
             <span>Nomi</span>
-            <input type="text" name="name" required>
-        </label>
-        <label class="field">
-            <span>Kategoriya</span>
-            <select name="category_id" required>
-                {% for c in categories %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
-            </select>
+            <input type="text" name="name" required placeholder="Masalan: Pepperoni pitsa">
         </label>
         <label class="field">
             <span>Narxi (so'm)</span>
-            <input type="number" step="0.01" min="0" name="price" required>
+            <input type="number" step="0.01" min="0" name="price" required placeholder="50000">
         </label>
         <label class="field full">
             <span>Izoh</span>
-            <textarea name="description" rows="3"></textarea>
+            <textarea name="description" rows="3" placeholder="Mahsulot tavsifi..."></textarea>
         </label>
         <label class="field">
             <span>Rasm</span>
             <input type="file" name="image" accept="image/*">
         </label>
-        <button type="submit" class="btn-primary">Saqlash</button>
+        <div class="btn-row">
+            <button type="submit" class="btn-primary">Saqlash</button>
+            <button type="button" class="btn-secondary"
+                    onclick="document.getElementById('new-prod').classList.add('hidden')">
+                Bekor qilish
+            </button>
+        </div>
     </form>
-    {% endif %}
 </div>
 
 <div class="cards-grid">
@@ -62,8 +64,10 @@
             <label class="field">
                 <span>Kategoriya</span>
                 <select name="category_id" required>
-                    {% for c in categories %}
-                        <option value="{{ c.id }}" {% if c.id == p.category_id %}selected{% endif %}>{{ c.name }}</option>
+                    {% for c in all_categories %}
+                        <option value="{{ c.id }}" {% if c.id == p.category_id %}selected{% endif %}>
+                            {{ c.name }}
+                        </option>
                     {% endfor %}
                 </select>
             </label>
@@ -88,12 +92,19 @@
             </div>
         </form>
         <form method="post" action="/admin/products/{{ p.id }}/delete"
-              onsubmit="return confirm('Mahsulot o\'chirilsinmi?');">
+              onsubmit="return confirm('«{{ p.name }}» mahsulot o\'chirilsinmi?');">
             <button type="submit" class="btn-danger">O'chirish</button>
         </form>
     </div>
     {% else %}
-        <div class="empty-state">Hali mahsulotlar yo'q.</div>
+        <div class="empty-state">
+            «{{ category.name }}» kategoriyasida hali mahsulot yo'q.
+            <br><br>
+            <button type="button" class="btn-primary"
+                    onclick="document.getElementById('new-prod').classList.remove('hidden')">
+                + Birinchi mahsulot qo'shish
+            </button>
+        </div>
     {% endfor %}
 </div>
 {% endblock %}

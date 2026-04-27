@@ -264,6 +264,50 @@ button:active { transform: translateY(1px); }
     border-radius: 8px; font-size: 13px;
 }
 
+/* ===== Category tiles (Mahsulotlar bo'limining 1-bosqichi) ===== */
+.cat-tile {
+    background: var(--surface); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm); padding: 16px;
+    display: flex; align-items: center; gap: 14px;
+    color: var(--text) !important;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.cat-tile:hover {
+    text-decoration: none; transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+.cat-tile-image {
+    width: 72px; height: 72px; border-radius: 12px; overflow: hidden;
+    background: linear-gradient(135deg, #e0e7ff, #fce7f3);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.cat-tile-image img { width: 100%; height: 100%; object-fit: cover; }
+.cat-tile-image .image-placeholder { font-size: 28px; }
+.cat-tile-body { flex: 1; min-width: 0; }
+.cat-tile-name {
+    font-weight: 700; font-size: 16px; margin-bottom: 4px;
+}
+.cat-tile-count {
+    display: flex; align-items: center; gap: 6px;
+    color: var(--text-muted); font-size: 13px;
+}
+.count-badge {
+    background: var(--primary-soft); color: var(--primary);
+    border-radius: 999px; padding: 2px 10px; font-weight: 700; font-size: 12px;
+}
+.cat-tile-arrow {
+    font-size: 28px; color: var(--text-muted); padding-right: 8px;
+    line-height: 1; font-weight: 300;
+}
+
+/* Breadcrumb */
+.breadcrumb { font-size: 13px; margin-bottom: 6px; }
+.breadcrumb a {
+    color: var(--text-muted); text-decoration: none;
+    display: inline-flex; align-items: center; gap: 4px;
+}
+.breadcrumb a:hover { color: var(--primary); text-decoration: none; }
+
 /* ===== Chat ===== */
 .chat-users-list { display: flex; flex-direction: column; gap: 8px; }
 .chat-user-row {

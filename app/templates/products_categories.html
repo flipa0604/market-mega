@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Mahsulotlar — Market Mega{% endblock %}
+{% block content %}
+<header class="page-header">
+    <div>
+        <h1>Mahsulotlar</h1>
+        <p class="muted">Mahsulotlarni boshqarish uchun kategoriyani tanlang</p>
+    </div>
+</header>
+
+{% if not rows %}
+    <div class="empty-state">
+        Hali kategoriyalar yo'q.
+        <br><br>
+        <a href="/admin/categories" class="btn-primary" style="display:inline-block;text-decoration:none">
+            + Birinchi kategoriya yarating
+        </a>
+    </div>
+{% else %}
+<div class="cards-grid">
+    {% for r in rows %}
+    <a href="/admin/products/category/{{ r.category.id }}" class="cat-tile">
+        <div class="cat-tile-image">
+            {% if r.category.image %}
+                <img src="{{ r.category.image }}" alt="{{ r.category.name }}">
+            {% else %}
+                <div class="image-placeholder">▤</div>
+            {% endif %}
+        </div>
+        <div class="cat-tile-body">
+            <div class="cat-tile-name">{{ r.category.name }}</div>
+            <div class="cat-tile-count">
+                <span class="count-badge">{{ r.count }}</span>
+                <span class="count-label">ta mahsulot</span>
+            </div>
+            {% if not r.category.is_active %}
+                <span class="status-chip" style="background:#fee2e2;color:#991b1b;margin-top:8px">Nofaol</span>
+            {% endif %}
+        </div>
+        <div class="cat-tile-arrow">›</div>
+    </a>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

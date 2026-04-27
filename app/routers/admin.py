@@ -220,24 +220,58 @@ async def category_delete(
 
 
 @router.get("/products", response_class=HTMLResponse)
-async def products_list(
+async def products_categories_view(
     request: Request,
     db: AsyncSession = Depends(get_db),
     admin: str = Depends(require_admin),
 ):
-    result = await db.execute(
-        select(Product).options(selectinload(Product.category)).order_by(Product.id.desc())
+    """Mahsulotlar bo'limining 1-bosqichi: kategoriyalar tanlash"""
+    stmt = (
+        select(Category, func.count(Product.id).label("product_count"))
+        .outerjoin(Product, Product.category_id == Category.id)
+        .group_by(Category.id)
+        .order_by(Category.sort_order, Category.name)
     )
-    products = list(result.scalars().all())
-    cats_result = await db.execute(select(Category).order_by(Category.name))
-    categories = list(cats_result.scalars().all())
+    result = await db.execute(stmt)
+    rows = [{"category": cat, "count": cnt} for cat, cnt in result.all()]
     return templates.TemplateResponse(
         request,
-        "products.html",
+        "products_categories.html",
+        {"admin": admin, "rows": rows},
+    )
+
+
+@router.get("/products/category/{category_id}", response_class=HTMLResponse)
+async def products_in_category_view(
+    category_id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    admin: str = Depends(require_admin),
+):
+    """Mahsulotlar bo'limining 2-bosqichi: tanlangan kategoriyadagi mahsulotlar"""
+    category = await db.get(Category, category_id)
+    if not category:
+        raise HTTPException(404, "Kategoriya topilmadi")
+
+    result = await db.execute(
+        select(Product)
+        .where(Product.category_id == category_id)
+        .order_by(Product.id.desc())
+    )
+    products = list(result.scalars().all())
+
+    # Mahsulotni boshqa kategoriyaga ko'chirish uchun
+    cats_result = await db.execute(select(Category).order_by(Category.name))
+    all_categories = list(cats_result.scalars().all())
+
+    return templates.TemplateResponse(
+        request,
+        "products_in_category.html",
         {
             "admin": admin,
+            "category": category,
             "products": products,
-            "categories": categories,
+            "all_categories": all_categories,
         },
     )
 
@@ -263,7 +297,9 @@ async def product_create(
         )
     )
     await db.commit()
-    return RedirectResponse(url="/admin/products", status_code=302)
+    return RedirectResponse(
+        url=f"/admin/products/category/{category_id}", status_code=302
+    )
 
 
 @router.post("/products/{product_id}/update")
@@ -290,7 +326,10 @@ async def product_update(
     if new_image:
         p.image = new_image
     await db.commit()
-    return RedirectResponse(url="/admin/products", status_code=302)
+    # Kategoriya ichida qoldiramiz (hatto kategoriya o'zgarsa ham — yangi joyiga o'tadi)
+    return RedirectResponse(
+        url=f"/admin/products/category/{category_id}", status_code=302
+    )
 
 
 @router.post("/products/{product_id}/delete")
@@ -300,10 +339,14 @@ async def product_delete(
     admin: str = Depends(require_admin),
 ):
     p = await db.get(Product, product_id)
-    if p:
-        await db.delete(p)
-        await db.commit()
-    return RedirectResponse(url="/admin/products", status_code=302)
+    if not p:
+        return RedirectResponse(url="/admin/products", status_code=302)
+    cat_id = p.category_id
+    await db.delete(p)
+    await db.commit()
+    return RedirectResponse(
+        url=f"/admin/products/category/{cat_id}", status_code=302
+    )
 
 
 # ============================================================
