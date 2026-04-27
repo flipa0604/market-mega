@@ -1,8 +1,9 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Annotated
 
 from pydantic import field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -27,7 +28,8 @@ class Settings(BaseSettings):
     ADMIN_USERNAME: str = "nodirbek"
     ADMIN_PASSWORD: str = "zxcv1234"
     # Bir nechta admin ID vergul bilan kiritilishi mumkin: 123,456,789
-    ADMIN_TELEGRAM_ID: list[int] = []
+    # NoDecode — pydantic-settings JSON parse qilmasin, biz o'zimiz parse qilamiz
+    ADMIN_TELEGRAM_ID: Annotated[list[int], NoDecode] = []
     # @username (without @) — bot bu username bilan kelgan foydalanuvchini admin deb hisoblaydi
     ADMIN_TG_USERNAME: str | None = None
 
