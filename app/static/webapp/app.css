@@ -103,6 +103,37 @@ html, body {
 .app-header.with-back .section-title { font-size: 17px; }
 .section-sub { color: var(--hint); margin: 4px 0 0; font-size: 13px; }
 
+/* ===== Search box ===== */
+.search-box {
+    position: relative;
+    margin: 4px 0 18px;
+    display: flex; align-items: center;
+    background: var(--secondary-bg);
+    border-radius: 14px;
+    box-shadow: var(--shadow-sm);
+    padding: 0 8px 0 14px;
+}
+.search-ic {
+    font-size: 16px; opacity: 0.6; flex-shrink: 0; line-height: 1;
+}
+.search-box input {
+    flex: 1; border: none; background: transparent;
+    padding: 13px 8px; font-size: 15px; font-family: inherit;
+    color: var(--text); outline: none;
+    -webkit-appearance: none; appearance: none;
+    min-width: 0;
+}
+.search-box input::-webkit-search-cancel-button { -webkit-appearance: none; }
+.search-box input::placeholder { color: var(--hint); }
+.search-clear {
+    width: 28px; height: 28px; border-radius: 50%; border: none;
+    background: rgba(0,0,0,0.08); color: var(--text);
+    font-size: 18px; cursor: pointer; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; padding: 0;
+}
+.search-clear:active { transform: scale(0.9); }
+
 /* ===== Categories ===== */
 .categories-grid {
     display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 8px 16px;

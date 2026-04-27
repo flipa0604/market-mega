@@ -77,6 +77,29 @@ async def list_products(
     return list(result.scalars().all())
 
 
+@router.get("/products/search", response_model=list[ProductOut])
+async def search_products(
+    q: str = "",
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(get_webapp_user),
+) -> list[Product]:
+    """Mahsulotlarni nomi yoki izohi bo'yicha qidirish."""
+    q = q.strip()
+    if len(q) < 2:
+        return []
+    pattern = f"%{q}%"
+    result = await db.execute(
+        select(Product)
+        .where(
+            Product.is_active.is_(True),
+            (Product.name.ilike(pattern)) | (Product.description.ilike(pattern)),
+        )
+        .order_by(Product.name)
+        .limit(50)
+    )
+    return list(result.scalars().all())
+
+
 @router.post("/orders", response_model=OrderCreateResponse)
 async def create_order(
     payload: OrderCreate,

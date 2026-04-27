@@ -465,10 +465,82 @@
         return new Intl.NumberFormat('uz-UZ').format(Math.round(Number(n) || 0));
     }
 
+    // ---------------------- Search ----------------------
+    let _searchTimer = null;
+    let _searchSeq = 0;
+
+    function onSearchInput(value) {
+        const clearBtn = document.getElementById('search-clear');
+        if (value && value.length > 0) {
+            clearBtn.classList.remove('hidden');
+        } else {
+            clearBtn.classList.add('hidden');
+        }
+        clearTimeout(_searchTimer);
+        _searchTimer = setTimeout(() => doSearch(value.trim()), 350);
+    }
+
+    async function doSearch(query) {
+        const grid = document.getElementById('categories-grid');
+        const heading = document.getElementById('categories-heading');
+        const sub = document.getElementById('categories-sub');
+        const results = document.getElementById('search-results');
+
+        if (!query || query.length < 2) {
+            // Qidiruv bo'sh — kategoriyalarni qaytaramiz
+            grid.classList.remove('hidden');
+            results.classList.add('hidden');
+            heading.textContent = 'Kategoriyalar';
+            sub.textContent = "Kerakli bo'limni tanlang";
+            return;
+        }
+
+        // Kategoriyalarni yashiramiz, natijalar joyiga loader
+        grid.classList.add('hidden');
+        heading.textContent = 'Qidiruv natijalari';
+        sub.textContent = `«${query}»`;
+        results.classList.remove('hidden');
+        results.innerHTML = `<div class="empty"><div class="empty-icon">⏳</div>Qidirilmoqda...</div>`;
+
+        const seq = ++_searchSeq;
+        try {
+            const products = await api(`/api/products/search?q=${encodeURIComponent(query)}`);
+            // Eskirgan so'rov javobini e'tiborga olmaymiz
+            if (seq !== _searchSeq) return;
+            // productsById ga qo'shib qo'yamiz (changeQty ishlashi uchun)
+            products.forEach(p => { state.productsById[p.id] = p; });
+            renderSearchResults(products, query);
+        } catch (e) {
+            if (seq !== _searchSeq) return;
+            results.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>${escapeHtml(e.message)}</div>`;
+        }
+    }
+
+    function renderSearchResults(products, query) {
+        const results = document.getElementById('search-results');
+        if (!products.length) {
+            results.innerHTML = `<div class="empty">
+                <div class="empty-icon">🔎</div>
+                <div>«${escapeHtml(query)}» bo'yicha topilmadi</div>
+            </div>`;
+            return;
+        }
+        results.innerHTML = products.map(p => productCardHtml(p)).join('');
+    }
+
+    function clearSearch() {
+        document.getElementById('search-input').value = '';
+        document.getElementById('search-clear').classList.add('hidden');
+        clearTimeout(_searchTimer);
+        _searchSeq++;
+        doSearch('');
+    }
+
     // ---------------------- Public API ----------------------
     window.App = {
         switchTab, showCategories, openCategory, changeQty,
         closeApp, sendMessage,
+        onSearchInput, clearSearch,
     };
 
     init();
