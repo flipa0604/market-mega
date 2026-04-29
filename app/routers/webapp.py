@@ -124,6 +124,11 @@ async def create_order(
             "Avval botga 📍 Lokatsiya yuborish tugmasi orqali lokatsiyangizni yuboring.",
         )
 
+    # Lokatsiya qiymatlarini olib qo'yamiz — keyin user'dan tozalanadi,
+    # ammo admin xabarnomasida hali ham kerak bo'ladi.
+    order_lat = user.last_lat
+    order_lng = user.last_lng
+
     cart_result = await db.execute(
         select(CartItem)
         .where(CartItem.user_id == user.id)
@@ -140,8 +145,8 @@ async def create_order(
         status=OrderStatus.new,
         customer_name=user.full_name,
         customer_phone=user.phone,
-        latitude=user.last_lat,
-        longitude=user.last_lng,
+        latitude=order_lat,
+        longitude=order_lng,
         total_price=0,
         completed_at=datetime.now(timezone.utc),
     )
@@ -172,6 +177,9 @@ async def create_order(
 
     # Savatni tozalash
     await db.execute(delete(CartItem).where(CartItem.user_id == user.id))
+    # Lokatsiyani tozalash — har bir buyurtmadan oldin yangidan yuborilishi kerak
+    user.last_lat = None
+    user.last_lng = None
     await db.commit()
     await db.refresh(order)
 
@@ -193,8 +201,8 @@ async def create_order(
                 await bot.send_message(admin_id, text)
                 await bot.send_location(
                     admin_id,
-                    latitude=user.last_lat,
-                    longitude=user.last_lng,
+                    latitude=order_lat,
+                    longitude=order_lng,
                 )
             except Exception:  # noqa: BLE001
                 pass
