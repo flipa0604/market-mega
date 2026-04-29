@@ -4,6 +4,7 @@ Mini App uchun JSON API.
 Frontend barcha so'rovlarga `X-Telegram-Init-Data` sarlavhasini qo'shadi.
 Autentifikatsiya `get_webapp_user` dependency ichida bajariladi.
 """
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -30,7 +31,6 @@ from app.schemas.webapp import (
     CategoryOut,
     MessageCreate,
     MessageOut,
-    OrderCreate,
     OrderCreateResponse,
     ProductOut,
 )
@@ -102,52 +102,102 @@ async def search_products(
 
 @router.post("/orders", response_model=OrderCreateResponse)
 async def create_order(
-    payload: OrderCreate,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_webapp_user),
 ) -> OrderCreateResponse:
-    # Mahsulotlarni bazadan olamiz (narxni mijozga ishonmaymiz)
-    product_ids = [item.product_id for item in payload.items]
-    result = await db.execute(
-        select(Product).where(Product.id.in_(product_ids), Product.is_active.is_(True))
-    )
-    products = {p.id: p for p in result.scalars().all()}
+    """Server-side cart'dan buyurtma yaratadi.
 
-    missing = [pid for pid in product_ids if pid not in products]
-    if missing:
+    Talablar:
+    - Telefon raqami ro'yxatdan o'tkazilgan bo'lishi kerak
+    - User avval botga lokatsiya yuborgan bo'lishi kerak (user.last_lat/last_lng)
+    - Savat bo'sh bo'lmasligi kerak
+
+    Buyurtma yaratilgach savat tozalanadi va barcha admin'larga
+    to'liq xabar (mahsulotlar + lokatsiya) yuboriladi.
+    """
+    if not user.phone:
+        raise HTTPException(400, "Avval botga telefon raqamingizni yuboring.")
+
+    if user.last_lat is None or user.last_lng is None:
         raise HTTPException(
-            status_code=400,
-            detail=f"Mahsulotlar topilmadi yoki nofaol: {missing}",
+            400,
+            "Avval botga 📍 Lokatsiya yuborish tugmasi orqali lokatsiyangizni yuboring.",
         )
+
+    cart_result = await db.execute(
+        select(CartItem)
+        .where(CartItem.user_id == user.id)
+        .options(selectinload(CartItem.product))
+    )
+    cart_items = list(cart_result.scalars().all())
+    active_items = [ci for ci in cart_items if ci.product and ci.product.is_active]
+
+    if not active_items:
+        raise HTTPException(400, "Savatingiz bo'sh.")
 
     order = Order(
         user_id=user.id,
-        status=OrderStatus.pending_location,
+        status=OrderStatus.new,
         customer_name=user.full_name,
         customer_phone=user.phone,
+        latitude=user.last_lat,
+        longitude=user.last_lng,
         total_price=0,
+        completed_at=datetime.now(timezone.utc),
     )
     db.add(order)
-    await db.flush()  # order.id olish uchun
+    await db.flush()
 
     total = Decimal("0")
-    for item in payload.items:
-        product = products[item.product_id]
-        unit_price = Decimal(str(product.price))
-        total += unit_price * item.quantity
+    item_lines: list[str] = []
+    for ci in active_items:
+        unit_price = Decimal(str(ci.product.price))
+        line_total = unit_price * ci.quantity
+        total += line_total
         db.add(
             OrderItem(
                 order_id=order.id,
-                product_id=product.id,
-                product_name=product.name,
+                product_id=ci.product_id,
+                product_name=ci.product.name,
                 unit_price=unit_price,
-                quantity=item.quantity,
+                quantity=ci.quantity,
             )
+        )
+        item_lines.append(
+            f"  • {ci.product.name} × {ci.quantity} = "
+            f"{float(line_total):,.0f} so'm"
         )
 
     order.total_price = float(total)
+
+    # Savatni tozalash
+    await db.execute(delete(CartItem).where(CartItem.user_id == user.id))
     await db.commit()
     await db.refresh(order)
+
+    # Admin'larga to'liq xabar
+    admin_ids = await get_admin_chat_ids(db)
+    if admin_ids:
+        from app.bot.bot import bot
+
+        items_text = "\n".join(item_lines)
+        text = (
+            f"🆕 <b>Yangi buyurtma #{order.id}</b>\n\n"
+            f"👤 {user.full_name}\n"
+            f"📞 {user.phone}\n\n"
+            f"{items_text}\n\n"
+            f"💰 Jami: <b>{float(order.total_price):,.0f} so'm</b>"
+        )
+        for admin_id in admin_ids:
+            try:
+                await bot.send_message(admin_id, text)
+                await bot.send_location(
+                    admin_id,
+                    latitude=user.last_lat,
+                    longitude=user.last_lng,
+                )
+            except Exception:  # noqa: BLE001
+                pass
 
     return OrderCreateResponse(
         order_id=order.id,

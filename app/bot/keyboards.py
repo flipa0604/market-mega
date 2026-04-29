@@ -21,12 +21,13 @@ def phone_request_kb() -> ReplyKeyboardMarkup:
 
 
 def main_menu_kb() -> ReplyKeyboardMarkup:
-    """Oddiy foydalanuvchi uchun: Buyurtma yuborish + Yordam.
+    """Oddiy foydalanuvchi uchun: Lokatsiya yuborish + Yordam.
     Doʻkon chap tomondagi Menu (☰) tugmasi orqali ochiladi.
+    Buyurtma yuborish mini app savat ichida bajariladi.
     """
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="🛒 Buyurtma yuborish")],
+            [KeyboardButton(text="📍 Lokatsiya yuborish", request_location=True)],
             [KeyboardButton(text="📞 Yordam")],
         ],
         resize_keyboard=True,

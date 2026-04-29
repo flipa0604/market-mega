@@ -38,19 +38,10 @@ class ProductOut(BaseModel):
         from_attributes = True
 
 
-class OrderItemIn(BaseModel):
-    product_id: int
-    quantity: int = Field(gt=0, le=999)
-
-
-class OrderCreate(BaseModel):
-    items: list[OrderItemIn] = Field(min_length=1)
-
-
 class OrderCreateResponse(BaseModel):
     order_id: int
     total_price: float
-    message: str = "Buyurtma qabul qilindi. Botga qaytib, lokatsiya yuboring."
+    message: str = "Buyurtmangiz qabul qilindi! Tez orada admin siz bilan bog'lanadi."
 
 
 class CartItemIn(BaseModel):

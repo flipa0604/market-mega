@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
     <meta name="theme-color" content="#6366f1">
     <title>Market Mega</title>
-    <link rel="stylesheet" href="/static/webapp/app.css?v=5">
+    <link rel="stylesheet" href="/static/webapp/app.css?v=6">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -124,14 +124,14 @@
                     <span id="cart-sum-total">0 so'm</span>
                 </div>
                 <div class="cart-instruction">
-                    <div class="ci-icon">📲</div>
+                    <div class="ci-icon">📍</div>
                     <div class="ci-text">
-                        Buyurtmani yuborish uchun <b>chatdagi pastki klaviatura'da</b>
-                        «<b>🛒 Buyurtma yuborish</b>» tugmasini bosing.
+                        Buyurtmadan oldin <b>botdagi pastki klaviatura'da</b>
+                        «<b>📍 Lokatsiya yuborish</b>» tugmasini bosing.
                     </div>
                 </div>
-                <button class="btn-order-large" onclick="App.closeApp()">
-                    Botga qaytish
+                <button id="btn-submit-order" class="btn-order-large" onclick="App.submitOrder()">
+                    🛒 Buyurtma yuborish
                 </button>
             </div>
         </div>
@@ -169,6 +169,6 @@
 
         <div id="toast" class="toast hidden"></div>
     </div>
-    <script src="/static/webapp/app.js?v=5"></script>
+    <script src="/static/webapp/app.js?v=6"></script>
 </body>
 </html>

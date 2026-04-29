@@ -367,6 +367,40 @@
         tg.close();
     }
 
+    // ---------------------- Submit order ----------------------
+    let _submitting = false;
+    async function submitOrder() {
+        if (_submitting) return;
+        const btn = document.getElementById('btn-submit-order');
+        if (!Object.keys(state.cart).length) {
+            showToast("Savat bo'sh");
+            return;
+        }
+        _submitting = true;
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Yuborilmoqda...';
+        }
+        try {
+            const res = await api('/api/orders', { method: 'POST' });
+            state.cart = {};
+            updateCartBadge();
+            renderCart();
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            showToast(res.message || 'Buyurtma yuborildi!');
+            setTimeout(() => tg.close(), 1500);
+        } catch (e) {
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+            showToast(e.message || 'Xato yuz berdi');
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = '🛒 Buyurtma yuborish';
+            }
+        } finally {
+            _submitting = false;
+        }
+    }
+
     // ---------------------- Chat ----------------------
     async function loadMessages() {
         try {
@@ -539,7 +573,7 @@
     // ---------------------- Public API ----------------------
     window.App = {
         switchTab, showCategories, openCategory, changeQty,
-        closeApp, sendMessage,
+        closeApp, submitOrder, sendMessage,
         onSearchInput, clearSearch,
     };
 
