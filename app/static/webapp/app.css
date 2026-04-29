@@ -12,6 +12,8 @@
     --accent: #8b5cf6;
     --danger: #ef4444;
     --success: #10b981;
+    /* Mahsulot narxi uchun jigarrang — ko'zga yaqqol tashlanishi uchun */
+    --price: #b45309;
     --radius: 14px;
     --radius-lg: 20px;
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
@@ -192,7 +194,7 @@ html, body {
     margin-top: auto;
 }
 .product-price {
-    font-weight: 800; font-size: 15px; color: var(--primary-dark);
+    font-weight: 800; font-size: 15px; color: var(--price);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
@@ -239,7 +241,7 @@ html, body {
 .cart-counter .counter-btn { width: 28px; height: 28px; font-size: 16px; }
 .cart-counter .counter-value { min-width: 28px; font-size: 14px; }
 .cart-item-total {
-    font-weight: 700; color: var(--primary-dark); font-size: 14px; white-space: nowrap;
+    font-weight: 700; color: var(--price); font-size: 14px; white-space: nowrap;
 }
 
 .cart-summary-card {
@@ -251,7 +253,7 @@ html, body {
     padding: 6px 0; font-size: 14px;
 }
 .summary-row.total {
-    font-size: 18px; font-weight: 800; color: var(--primary-dark);
+    font-size: 18px; font-weight: 800; color: var(--price);
     border-top: 1px solid rgba(0,0,0,0.05); padding-top: 12px; margin-top: 4px;
 }
 .cart-instruction {
@@ -446,6 +448,8 @@ html, body {
         --secondary-bg: var(--tg-theme-secondary-bg-color, #232e3c);
         --text: var(--tg-theme-text-color, #ffffff);
         --hint: var(--tg-theme-hint-color, #7d8b99);
+        /* Dark mode'da ochroq amber — qora fonda yaqqol ko'rinishi uchun */
+        --price: #fbbf24;
     }
     .counter { background: rgba(255,255,255,0.08); }
     .counter-btn:not(.plus) { background: var(--secondary-bg); }

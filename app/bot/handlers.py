@@ -101,6 +101,7 @@ async def handle_contact(message: Message) -> None:
     async with AsyncSessionLocal() as db:
         result = await db.execute(select(User).where(User.telegram_id == tg_user.id))
         user = result.scalar_one_or_none()
+        is_new_phone = user is None or not user.phone
         if user is None:
             user = User(
                 telegram_id=tg_user.id,
@@ -115,12 +116,18 @@ async def handle_contact(message: Message) -> None:
             )
         await db.commit()
 
-    await message.answer(
-        "✅ Ro'yxatdan o'tdingiz!\n\n"
-        "Endi do'konni ochib, mahsulotlarni tanlang.\n"
-        "Buyurtmadan oldin <b>📍 Lokatsiya yuborish</b> tugmasini bosing.",
-        reply_markup=main_menu_kb(),
-    )
+    if is_new_phone:
+        await message.answer(
+            "✅ Ro'yxatdan o'tdingiz!\n\n"
+            "Endi do'konni ochib, mahsulotlarni tanlang.\n"
+            "Buyurtmadan oldin <b>📍 Lokatsiya yuborish</b> tugmasini bosing.",
+            reply_markup=main_menu_kb(),
+        )
+    else:
+        await message.answer(
+            f"✅ Telefon raqamingiz yangilandi: <b>{contact.phone_number}</b>",
+            reply_markup=main_menu_kb(),
+        )
 
 
 # ---------------------------------------------------------------
