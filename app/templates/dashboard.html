@@ -54,4 +54,83 @@
         </div>
     </a>
 </section>
+
+<section class="users-section">
+    <header class="section-head">
+        <div>
+            <h2>Bot foydalanuvchilari</h2>
+            <p class="muted">Jami: {{ users_rows|length }} ta. Eng yangidan boshlab.</p>
+        </div>
+    </header>
+
+    {% if users_rows %}
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Ism</th>
+                    <th>Telegram</th>
+                    <th>Username</th>
+                    <th>Telefon</th>
+                    <th>Lokatsiya</th>
+                    <th>Buyurtmalar</th>
+                    <th>Ro'yxatdan o'tgan</th>
+                    <th>Chat</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in users_rows %}
+                {% set u = row.user %}
+                <tr>
+                    <td class="muted">{{ u.id }}</td>
+                    <td><strong>{{ u.full_name }}</strong></td>
+                    <td><code>{{ u.telegram_id }}</code></td>
+                    <td>
+                        {% if u.username %}
+                            <a href="https://t.me/{{ u.username }}" target="_blank">@{{ u.username }}</a>
+                        {% else %}
+                            <span class="muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if u.phone %}
+                            <a href="tel:{{ u.phone }}">{{ u.phone }}</a>
+                        {% else %}
+                            <span class="muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if u.last_lat and u.last_lng %}
+                            <a href="https://maps.google.com/?q={{ u.last_lat }},{{ u.last_lng }}" target="_blank">
+                                {{ "%.5f"|format(u.last_lat) }}, {{ "%.5f"|format(u.last_lng) }}
+                            </a>
+                        {% else %}
+                            <span class="muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if row.order_count %}
+                            <span class="badge badge-blue">{{ row.order_count }}</span>
+                        {% else %}
+                            <span class="muted">0</span>
+                        {% endif %}
+                    </td>
+                    <td class="muted small">
+                        {{ u.created_at.strftime('%Y-%m-%d %H:%M') if u.created_at else '—' }}
+                    </td>
+                    <td>
+                        <a class="btn-mini" href="/admin/chat/{{ u.id }}">Yozish</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>Hozircha foydalanuvchilar yo'q.</p>
+    </div>
+    {% endif %}
+</section>
 {% endblock %}

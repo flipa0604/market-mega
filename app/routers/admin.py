@@ -128,6 +128,22 @@ async def dashboard(
         )
     ).scalar() or 0
 
+    # Bot foydalanuvchilari + har bittasi uchun buyurtmalar soni
+    users_stmt = (
+        select(
+            User,
+            func.count(Order.id).label("order_count"),
+        )
+        .outerjoin(Order, Order.user_id == User.id)
+        .group_by(User.id)
+        .order_by(User.created_at.desc())
+    )
+    users_result = await db.execute(users_stmt)
+    users_rows = [
+        {"user": u, "order_count": cnt or 0}
+        for u, cnt in users_result.all()
+    ]
+
     return templates.TemplateResponse(
         request,
         "dashboard.html",
@@ -140,6 +156,7 @@ async def dashboard(
                 "orders": total_orders,
                 "pending": pending_orders,
             },
+            "users_rows": users_rows,
         },
     )
 
