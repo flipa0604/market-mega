@@ -183,12 +183,27 @@ async def create_order(
     await db.commit()
     await db.refresh(order)
 
+    items_text = "\n".join(item_lines)
+
+    from app.bot.bot import bot
+
+    # Mijozga tasdiq xabari
+    client_text = (
+        f"✅ <b>Buyurtmangiz qabul qilindi!</b>\n\n"
+        f"🧾 Buyurtma raqami: <b>#{order.id}</b>\n\n"
+        f"<b>Tanlangan mahsulotlar:</b>\n"
+        f"{items_text}\n\n"
+        f"💰 Jami to'lov: <b>{float(order.total_price):,.0f} so'm</b>\n\n"
+        f"Tez orada admin siz bilan bog'lanadi. Rahmat! 🙏"
+    )
+    try:
+        await bot.send_message(user.telegram_id, client_text)
+    except Exception:  # noqa: BLE001
+        pass
+
     # Admin'larga to'liq xabar
     admin_ids = await get_admin_chat_ids(db)
     if admin_ids:
-        from app.bot.bot import bot
-
-        items_text = "\n".join(item_lines)
         text = (
             f"🆕 <b>Yangi buyurtma #{order.id}</b>\n\n"
             f"👤 {user.full_name}\n"
