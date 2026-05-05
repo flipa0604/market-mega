@@ -220,10 +220,12 @@
 
     function productCardHtml(p) {
         const qty = state.cart[p.id]?.quantity || 0;
+        const imgAttr = p.image ? escapeHtml(p.image) : '';
         return `
         <div class="product-card" data-pid="${p.id}">
-            <div class="product-image">
-                ${p.image ? `<img src="${p.image}" alt="">`
+            <div class="product-image${p.image ? ' zoomable' : ''}"
+                 ${p.image ? `onclick="App.openImage('${imgAttr}')"` : ''}>
+                ${p.image ? `<img src="${imgAttr}" alt="">`
                           : `<div class="product-image-placeholder">📦</div>`}
             </div>
             <div class="product-body">
@@ -359,6 +361,26 @@
         document.getElementById('cart-sum-items').textContent = `${count} ta`;
         document.getElementById('cart-sum-total').textContent = `${formatPrice(total)} so'm`;
         summary.classList.remove('hidden');
+    }
+
+    // ---------------------- Image lightbox ----------------------
+    function openImage(src) {
+        if (!src) return;
+        const box = document.getElementById('lightbox');
+        const img = document.getElementById('lightbox-img');
+        if (!box || !img) return;
+        img.src = src;
+        box.classList.remove('hidden');
+        if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    }
+
+    function closeImage(ev) {
+        if (ev) ev.stopPropagation();
+        const box = document.getElementById('lightbox');
+        const img = document.getElementById('lightbox-img');
+        if (!box) return;
+        box.classList.add('hidden');
+        if (img) img.src = '';
     }
 
     // ---------------------- Close app ----------------------
@@ -575,6 +597,7 @@
         switchTab, showCategories, openCategory, changeQty,
         closeApp, submitOrder, sendMessage,
         onSearchInput, clearSearch,
+        openImage, closeImage,
     };
 
     init();

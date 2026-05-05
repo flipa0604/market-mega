@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
     <meta name="theme-color" content="#6366f1">
     <title>Market Mega</title>
-    <link rel="stylesheet" href="/static/webapp/app.css?v=9">
+    <link rel="stylesheet" href="/static/webapp/app.css?v=10">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -168,7 +168,13 @@
         </nav>
 
         <div id="toast" class="toast hidden"></div>
+
+        <!-- ========== Image lightbox ========== -->
+        <div id="lightbox" class="lightbox hidden" onclick="App.closeImage(event)">
+            <button type="button" class="lightbox-close" onclick="App.closeImage(event)" aria-label="Yopish">×</button>
+            <img id="lightbox-img" class="lightbox-img" alt="" onclick="event.stopPropagation()">
+        </div>
     </div>
-    <script src="/static/webapp/app.js?v=9"></script>
+    <script src="/static/webapp/app.js?v=10"></script>
 </body>
 </html>
